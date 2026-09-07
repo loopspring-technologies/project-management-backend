@@ -120,3 +120,113 @@ exports.getEmployeeById = async (req, res) => {
     });
   }
 };
+
+// Update Employee
+exports.updateEmployee = async (req, res) => {
+  try {
+    const { name, designation, username } = req.body;
+
+    if (!name || !designation || !username) {
+      return res.status(400).json({
+        success: false,
+        message: "Name, designation and username are required",
+      });
+    }
+
+    const employee = await Employee.findById(req.params.id);
+
+    if (!employee) {
+      return res.status(404).json({
+        success: false,
+        message: "Employee not found",
+      });
+    }
+
+    const existingEmployee = await Employee.findOne({
+      username: username.toLowerCase(),
+      _id: { $ne: req.params.id },
+    });
+
+    if (existingEmployee) {
+      return res.status(400).json({
+        success: false,
+        message: "Username already exists",
+      });
+    }
+
+    employee.name = name;
+    employee.designation = designation;
+    employee.username = username.toLowerCase();
+
+    await employee.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Employee updated successfully",
+      employee: {
+        id: employee._id,
+        name: employee.name,
+        designation: employee.designation,
+        username: employee.username,
+        role: employee.role,
+        isActive: employee.isActive,
+      },
+    });
+  } catch (error) {
+    console.error("Update employee error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to update employee",
+    });
+  }
+};
+
+// Activate / Deactivate Employee
+exports.updateEmployeeStatus = async (req, res) => {
+  try {
+    const { isActive } = req.body;
+
+    if (typeof isActive !== "boolean") {
+      return res.status(400).json({
+        success: false,
+        message: "isActive must be true or false",
+      });
+    }
+
+    const employee = await Employee.findById(req.params.id);
+
+    if (!employee) {
+      return res.status(404).json({
+        success: false,
+        message: "Employee not found",
+      });
+    }
+
+    employee.isActive = isActive;
+
+    await employee.save();
+
+    res.status(200).json({
+      success: true,
+      message: `Employee ${
+        isActive ? "activated" : "deactivated"
+      } successfully`,
+      employee: {
+        id: employee._id,
+        name: employee.name,
+        designation: employee.designation,
+        username: employee.username,
+        role: employee.role,
+        isActive: employee.isActive,
+      },
+    });
+  } catch (error) {
+    console.error("Update employee status error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to update employee status",
+    });
+  }
+};
