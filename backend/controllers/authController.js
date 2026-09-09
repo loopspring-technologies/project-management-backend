@@ -2,12 +2,10 @@ const Employee = require("../models/Employee");
 const bcrypt = require("bcryptjs");
 const generateToken = require("../utils/generateToken");
 
-// Login
 exports.login = async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    // Check required fields
     if (!username || !password) {
       return res.status(400).json({
         success: false,
@@ -15,7 +13,6 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Find employee
     const employee = await Employee.findOne({
       username: username.toLowerCase(),
     });
@@ -27,7 +24,6 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Only employees can login
     if (employee.role !== "EMPLOYEE") {
       return res.status(403).json({
         success: false,
@@ -35,7 +31,6 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Check account status
     if (!employee.isActive) {
       return res.status(403).json({
         success: false,
@@ -43,7 +38,6 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Check password
     const isPasswordCorrect = await bcrypt.compare(
       password,
       employee.password
@@ -56,10 +50,8 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Generate JWT token
     const token = generateToken(employee);
 
-    // Successful login response
     res.status(200).json({
       success: true,
       message: "Login successful",
@@ -82,7 +74,6 @@ exports.login = async (req, res) => {
   }
 };
 
-// Get Logged-in Employee
 exports.getMe = async (req, res) => {
   try {
     res.status(200).json({
