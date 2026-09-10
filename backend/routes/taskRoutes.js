@@ -1,8 +1,8 @@
 const express = require("express");
 
 const {
-  createTask, getModuleTasks, getTaskById, updateTask, deleteTask, bookTask,
-} = require("../controllers/taskController");
+  createTask, getModuleTasks, getTaskById, updateTask, deleteTask, bookTask, startTask, completeTask,
+ revokeTask, } = require("../controllers/taskController");
 const protect = require("../middleware/authMiddleware");
 
 const router = express.Router({ mergeParams: true });
@@ -13,5 +13,9 @@ router.get("/:taskId", getTaskById);
 router.put("/:taskId", updateTask);
 router.delete("/:taskId", deleteTask);
 router.post("/:taskId/book", protect, bookTask);
+router.post("/:taskId/start", protect, startTask);
+router.post("/:taskId/complete", protect, completeTask);
+router.post("/:taskId/revoke", protect, revokeTask);
+
 
 module.exports = router;
