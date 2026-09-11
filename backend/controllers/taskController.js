@@ -46,7 +46,6 @@ exports.createTask = async (req, res) => {
 exports.getModuleTasks = async (req, res) => {
   try {
     const { moduleId } = req.params;
-
     const module = await Module.findById(moduleId);
 
     if (!module) {

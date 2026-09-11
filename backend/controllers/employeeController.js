@@ -5,7 +5,6 @@ const bcrypt = require("bcryptjs");
 exports.createEmployee = async (req, res) => {
   try {
     const { name, designation, username, password } = req.body;
-
     // Check required fields
     if (!name || !designation || !username || !password) {
       return res.status(400).json({

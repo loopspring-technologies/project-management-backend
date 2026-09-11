@@ -12,7 +12,6 @@ exports.login = async (req, res) => {
         message: "Username and password are required",
       });
     }
-
     const employee = await Employee.findOne({
       username: username.toLowerCase(),
     });

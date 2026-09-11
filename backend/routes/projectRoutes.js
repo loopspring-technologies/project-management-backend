@@ -1,17 +1,25 @@
 const express = require("express");
 
-const {
-  createProject, getProjects, getProjectById, updateProject, deleteProject
+const { createProject, getProjects, getProjectById, updateProject, deleteProject
 } = require("../controllers/projectController");
 const { getProjectProgress, } = require("../controllers/progressController");
+const { getProjectWorkTracking,} = require("../controllers/workTrackingController");
+const { getProjectDetails,} = require("../controllers/projectDetailController");
+const protect = require("../middleware/authMiddleware");
+const authorizeRoles = require("../middleware/roleMiddleware");
 
 const router = express.Router();
 
-router.post("/", createProject);
+// router.post("/", createProject);
+router.post( "/", protect, authorizeRoles("ADMIN"), createProject);
 router.get("/", getProjects);
 router.get("/:projectId/progress", getProjectProgress);
+router.get("/:projectId/work-tracking", getProjectWorkTracking);
+router.get("/:projectId/details", getProjectDetails);
 router.get("/:id", getProjectById);
-router.put("/:id", updateProject);
-router.delete("/:id", deleteProject);
+// router.put("/:id", updateProject);
+router.put( "/:id", protect, authorizeRoles("ADMIN"), updateProject);
+// router.delete("/:id", deleteProject);
+router.delete( "/:id", protect, authorizeRoles("ADMIN"), deleteProject);
 
 module.exports = router;
