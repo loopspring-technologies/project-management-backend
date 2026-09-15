@@ -4,7 +4,6 @@ const {
   createTask, getModuleTasks, getTaskById, updateTask, deleteTask, bookTask, startTask, completeTask,
  revokeTask, } = require("../controllers/taskController");
 const protect = require("../middleware/authMiddleware");
-const authorizeRoles = require("../middleware/roleMiddleware");
 
 const router = express.Router({ mergeParams: true });
 

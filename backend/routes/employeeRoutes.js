@@ -5,7 +5,6 @@ const { createEmployee, getEmployees,
 } = require("../controllers/employeeController");
 const { getMyProjects,} = require("../controllers/projectAssignmentController");
 const protect = require("../middleware/authMiddleware");
-const authorizeRoles = require("../middleware/roleMiddleware");
 
 const router = express.Router();
 

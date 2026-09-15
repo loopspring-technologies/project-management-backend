@@ -5,8 +5,6 @@ const { createProject, getProjects, getProjectById, updateProject, deleteProject
 const { getProjectProgress, } = require("../controllers/progressController");
 const { getProjectWorkTracking,} = require("../controllers/workTrackingController");
 const { getProjectDetails,} = require("../controllers/projectDetailController");
-const protect = require("../middleware/authMiddleware");
-const authorizeRoles = require("../middleware/roleMiddleware");
 
 const router = express.Router();
 
