@@ -2,7 +2,6 @@ const ProjectAssignment = require("../models/ProjectAssignment");
 const Project = require("../models/Project");
 const Employee = require("../models/Employee");
 
-// Assign Employee to Project
 exports.assignEmployeeToProject = async (req, res) => {
   try {
     const { employeeId, designation } = req.body;
@@ -53,7 +52,6 @@ if (existingAssignment) {
     });
   }
 
-  // Reactivate previous assignment
   existingAssignment.status = "ACTIVE";
   existingAssignment.designation = designation;
   existingAssignment.assignedAt = new Date();

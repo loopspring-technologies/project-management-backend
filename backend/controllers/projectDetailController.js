@@ -5,7 +5,6 @@ const { getProjectWorkTracking,} = require("../services/workTrackingService");
 exports.getProjectDetails = async (req, res) => {
   try {
     const { projectId } = req.params;
-
     const project = await Project.findOne({
       _id: projectId,
       isActive: true,
@@ -19,7 +18,6 @@ exports.getProjectDetails = async (req, res) => {
     }
 
     const progress = await calculateProjectProgress(projectId);
-
     const workTracking = await getProjectWorkTracking(projectId);
 
     res.status(200).json({

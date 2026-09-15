@@ -1,6 +1,6 @@
 const { getProjectWorkTracking,} = require("../services/workTrackingService");
 
-exports.getProjectWorkTracking = async (req, res) => {
+exports.getProjectWorkTracking = async (req, res) => { 
   try {
     const { projectId } = req.params;
     const data = await getProjectWorkTracking(projectId);
@@ -10,7 +10,7 @@ exports.getProjectWorkTracking = async (req, res) => {
     });
   } catch (error) {
     console.error("Get project work tracking error:", error);
-
+    
     if (error.message === "Project not found") {
       return res.status(404).json({
         success: false,

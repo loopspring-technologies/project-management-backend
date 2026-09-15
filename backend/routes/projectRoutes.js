@@ -10,16 +10,13 @@ const authorizeRoles = require("../middleware/roleMiddleware");
 
 const router = express.Router();
 
-// router.post("/", createProject);
-router.post( "/", protect, authorizeRoles("ADMIN"), createProject);
+router.post("/", createProject);
 router.get("/", getProjects);
 router.get("/:projectId/progress", getProjectProgress);
 router.get("/:projectId/work-tracking", getProjectWorkTracking);
 router.get("/:projectId/details", getProjectDetails);
 router.get("/:id", getProjectById);
-// router.put("/:id", updateProject);
-router.put( "/:id", protect, authorizeRoles("ADMIN"), updateProject);
-// router.delete("/:id", deleteProject);
-router.delete( "/:id", protect, authorizeRoles("ADMIN"), deleteProject);
+router.put("/:id", updateProject);
+router.delete("/:id", deleteProject);
 
 module.exports = router;

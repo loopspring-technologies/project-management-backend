@@ -8,11 +8,9 @@ const authorizeRoles = require("../middleware/roleMiddleware");
 
 const router = express.Router({ mergeParams: true });
 
-// router.post("/", assignEmployeeToProject);
-router.post( "/", protect, authorizeRoles("ADMIN"), assignEmployeeToProject);
+router.post("/", assignEmployeeToProject);
 router.get("/", getProjectEmployees);
-// router.delete("/:employeeId", removeEmployeeFromProject);
-router.delete( "/:employeeId", protect, authorizeRoles("ADMIN"), removeEmployeeFromProject);
+router.delete("/:employeeId", removeEmployeeFromProject);
 
 
 module.exports = router;
