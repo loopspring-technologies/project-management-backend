@@ -1,4 +1,5 @@
 const Project = require("../models/Project");
+const { calculateProjectProgress } = require("../services/progressService");
 
 // Create Project
 exports.createProject = async (req, res) => {
@@ -35,15 +36,56 @@ exports.createProject = async (req, res) => {
   }
 };
 
-// Get All Projects
+
+// Get All Projects with Pagination and Progress
 exports.getProjects = async (req, res) => {
   try {
-    const projects = await Project.find().sort({ createdAt: -1 });
+    let { page = 1, limit = 6 } = req.query;
+    page = parseInt(page);
+    limit = parseInt(limit);
+
+    if (isNaN(page) || page < 1) {
+      page = 1;
+    }
+
+    if (isNaN(limit) || limit < 1 || limit > 100) {
+      limit = 6;
+    }
+
+    const skip = (page - 1) * limit;
+    const projects = await Project.find()
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const totalProjects = await Project.countDocuments();
+    const totalPages = Math.ceil(totalProjects / limit);
+
+    const projectsWithProgress = await Promise.all(
+      projects.map(async (project) => {
+        const progress = await calculateProjectProgress(project._id);
+
+        return {
+          ...project.toObject(),
+          progress,
+        };
+      })
+    );
 
     res.status(200).json({
       success: true,
-      count: projects.length,
-      projects,
+      count: projectsWithProgress.length,
+
+      pagination: {
+        currentPage: page,
+        limit,
+        totalProjects,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
+
+      projects: projectsWithProgress,
     });
   } catch (error) {
     console.error("Get projects error:", error);
@@ -148,3 +190,4 @@ exports.deleteProject = async (req, res) => {
     });
   }
 };
+

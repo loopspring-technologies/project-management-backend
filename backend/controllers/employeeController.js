@@ -1,5 +1,4 @@
 const Employee = require("../models/Employee");
-const bcrypt = require("bcryptjs");
 
 // Create Employee
 exports.createEmployee = async (req, res) => {
@@ -32,14 +31,15 @@ exports.createEmployee = async (req, res) => {
     }
 
     // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create employee
     const employee = await Employee.create({
       name,
       designation,
       username: username.toLowerCase(),
-      password: hashedPassword,
+      // password: hashedPassword,
+      password,
       role: "EMPLOYEE",
     });
 
@@ -66,15 +66,45 @@ exports.createEmployee = async (req, res) => {
   }
 };
 
+
+// Get Employees with Pagination
 exports.getEmployees = async (req, res) => {
   try {
+    let { page = 1, limit = 10 } = req.query;
+    page = parseInt(page);
+    limit = parseInt(limit);
+
+    if (isNaN(page) || page < 1) {
+      page = 1;
+    }
+    if (isNaN(limit) || limit < 1 || limit > 100) {
+      limit = 10;
+    }
+
+    const skip = (page - 1) * limit;
+
     const employees = await Employee.find()
-      .select("-password")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const totalEmployees = await Employee.countDocuments();
+
+    const totalPages = Math.ceil(totalEmployees / limit);
 
     res.status(200).json({
       success: true,
       count: employees.length,
+
+      pagination: {
+        currentPage: page,
+        limit,
+        totalEmployees,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
+
       employees,
     });
   } catch (error) {
