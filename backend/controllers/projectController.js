@@ -4,10 +4,10 @@ const { calculateProjectProgress } = require("../services/progressService");
 // Create Project
 exports.createProject = async (req, res) => {
   try {
-    const { title, clientName, startDate } = req.body;
+    const { title, clientName, DeadLine } = req.body;
 
     // Check required fields
-    if (!title || !startDate) {
+    if (!title || !deadLine) {
       return res.status(400).json({
         success: false,
         message: "Project title and start date are required",
@@ -18,7 +18,7 @@ exports.createProject = async (req, res) => {
     const project = await Project.create({
       title,
       clientName,
-      startDate,
+      deadLine,
     });
 
     res.status(201).json({
@@ -126,9 +126,9 @@ exports.getProjectById = async (req, res) => {
 // Update Project
 exports.updateProject = async (req, res) => {
   try {
-    const { title, clientName, startDate } = req.body;
+    const { title, clientName, deadLine } = req.body;
 
-    if (!title || !startDate) {
+    if (!title || !deadLine) {
       return res.status(400).json({
         success: false,
         message: "Project title and start date are required",
@@ -146,7 +146,7 @@ exports.updateProject = async (req, res) => {
 
     project.title = title;
     project.clientName = clientName;
-    project.startDate = startDate;
+    project.deadLine = deadLine;
 
     await project.save();
 

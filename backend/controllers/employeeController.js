@@ -43,7 +43,6 @@ exports.createEmployee = async (req, res) => {
       role: "EMPLOYEE",
     });
 
-    // Never send password back
     res.status(201).json({
       success: true,
       message: "Employee created successfully",
@@ -52,6 +51,7 @@ exports.createEmployee = async (req, res) => {
         name: employee.name,
         designation: employee.designation,
         username: employee.username,
+        password:employee.password,
         role: employee.role,
         isActive: employee.isActive,
       },
@@ -146,16 +146,24 @@ exports.getEmployeeById = async (req, res) => {
   }
 };
 
+
 exports.updateEmployee = async (req, res) => {
   try {
-    const { name, designation, username, isActive } = req.body;
+    const { name, designation, username, password, isActive, } = req.body;
 
-    if (!name || !designation || !username) {
+    if (!name || !designation || !username || !password) {
       return res.status(400).json({
         success: false,
-        message: "Name, designation and username are required",
+        message:
+          "Name, designation, username and password are required",
       });
     }
+     if (password.length < 6) {
+  return res.status(400).json({
+    success: false,
+    message: "Password must be at least 6 characters",
+  });
+}
 
     if (typeof isActive !== "boolean") {
       return res.status(400).json({
@@ -179,7 +187,7 @@ exports.updateEmployee = async (req, res) => {
     });
 
     if (existingEmployee) {
-      return res.status(400).json({
+      return res.status(409).json({
         success: false,
         message: "Username already exists",
       });
@@ -188,6 +196,7 @@ exports.updateEmployee = async (req, res) => {
     employee.name = name;
     employee.designation = designation;
     employee.username = username.toLowerCase();
+    employee.password = password;
     employee.isActive = isActive;
 
     await employee.save();
@@ -211,7 +220,7 @@ exports.updateEmployee = async (req, res) => {
       success: false,
       message: "Failed to update employee",
     });
-  }
+  } 
 };
 
 // Delete Employee

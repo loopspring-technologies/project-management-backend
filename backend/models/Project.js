@@ -13,7 +13,7 @@ const projectSchema = new mongoose.Schema(
       trim: true,
     },
 
-    startDate: {
+    deadLine: {
       type: Date,
       required: true,
     },
