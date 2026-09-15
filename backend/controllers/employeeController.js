@@ -1,4 +1,5 @@
 const Employee = require("../models/Employee");
+const ProjectAssignment = require("../models/ProjectAssignment");
 
 // Create Employee
 exports.createEmployee = async (req, res) => {
@@ -226,7 +227,8 @@ exports.updateEmployee = async (req, res) => {
 // Delete Employee
 exports.deleteEmployee = async (req, res) => {
   try {
-    const employee = await Employee.findByIdAndDelete(req.params.id);
+    const employeeId = req.params.id;
+    const employee = await Employee.findById(employeeId);
 
     if (!employee) {
       return res.status(404).json({
@@ -235,8 +237,24 @@ exports.deleteEmployee = async (req, res) => {
       });
     }
 
+    const assignedProjects = await ProjectAssignment.countDocuments({
+      employeeId: employeeId,
+      status: "ACTIVE",
+    });
+
+    if (assignedProjects > 0) {
+      return res.status(400).json({
+        success: false,
+        canDelete: false,
+        message:
+          "This employee is assigned projects.",
+      });
+    }
+    await Employee.findByIdAndDelete(employeeId);
+
     res.status(200).json({
       success: true,
+      canDelete: true,
       message: "Employee deleted successfully",
     });
   } catch (error) {

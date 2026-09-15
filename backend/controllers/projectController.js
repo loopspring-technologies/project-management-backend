@@ -1,10 +1,11 @@
 const Project = require("../models/Project");
 const { calculateProjectProgress } = require("../services/progressService");
+const ProjectAssignment = require("../models/ProjectAssignment");
 
 // Create Project
 exports.createProject = async (req, res) => {
   try {
-    const { title, clientName, DeadLine } = req.body;
+    const { title, clientName, deadLine } = req.body;
 
     // Check required fields
     if (!title || !deadLine) {
@@ -168,7 +169,8 @@ exports.updateProject = async (req, res) => {
 // Delete Project
 exports.deleteProject = async (req, res) => {
   try {
-    const project = await Project.findByIdAndDelete(req.params.id);
+    const projectId = req.params.id;
+    const project = await Project.findById(projectId);
 
     if (!project) {
       return res.status(404).json({
@@ -176,9 +178,25 @@ exports.deleteProject = async (req, res) => {
         message: "Project not found",
       });
     }
+    const assignedEmployees = await ProjectAssignment.countDocuments({
+      projectId: projectId,
+      status: "ACTIVE",
+    });
+
+    if (assignedEmployees > 0) {
+      return res.status(400).json({
+        success: false,
+        canDelete: false,
+        message:
+          "This project is assigned to employees.",
+      });
+    }
+
+    await Project.findByIdAndDelete(projectId);
 
     res.status(200).json({
       success: true,
+      canDelete: true,
       message: "Project deleted successfully",
     });
   } catch (error) {
@@ -190,4 +208,3 @@ exports.deleteProject = async (req, res) => {
     });
   }
 };
-
