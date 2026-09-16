@@ -1,13 +1,14 @@
 const express = require("express");
 
 const { createModule, getProjectModules, getModuleById,
-  updateModule, deleteModule,} = require("../controllers/moduleController");
+  updateModule, deleteModule, getModulesByDesignation,} = require("../controllers/moduleController");
 const { getModuleProgress, } = require("../controllers/progressController");
 
 const router = express.Router({ mergeParams: true });
 
 router.post("/", createModule);
 router.get("/", getProjectModules);
+router.get( "/designation/:designation", getModulesByDesignation);
 router.get("/:moduleId/progress", getModuleProgress);
 router.get("/:moduleId", getModuleById);
 router.put("/:moduleId", updateModule);

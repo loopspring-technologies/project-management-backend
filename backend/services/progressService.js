@@ -1,6 +1,15 @@
 const Task = require("../models/Task");
 const Module = require("../models/Module");
 
+const DESIGNATIONS = [
+  "Designing",
+  "Frontend",
+  "Backend",
+  "Database",
+  "Testing",
+  "Hosting",
+];
+
 const calculateModuleProgress = async (moduleId) => {
   const totalTasks = await Task.countDocuments({
     moduleId,
@@ -13,7 +22,9 @@ const calculateModuleProgress = async (moduleId) => {
     isActive: true,
   });
 
-  const progress = totalTasks === 0 ? 0
+  const progress =
+    totalTasks === 0
+      ? 0
       : Math.round((completedTasks / totalTasks) * 100);
 
   return {
@@ -28,8 +39,10 @@ const calculateProjectProgress = async (projectId) => {
     projectId,
     isActive: true,
   });
+
   let totalTasks = 0;
   let completedTasks = 0;
+
   for (const module of modules) {
     const total = await Task.countDocuments({
       moduleId: module._id,
@@ -46,7 +59,9 @@ const calculateProjectProgress = async (projectId) => {
     completedTasks += completed;
   }
 
-  const progress = totalTasks === 0 ? 0
+  const progress =
+    totalTasks === 0
+      ? 0
       : Math.round((completedTasks / totalTasks) * 100);
 
   return {
@@ -56,4 +71,52 @@ const calculateProjectProgress = async (projectId) => {
   };
 };
 
-module.exports = { calculateModuleProgress, calculateProjectProgress };
+const calculateDesignationProgress = async (projectId) => {
+  const designationProgress = {};
+
+  for (const designation of DESIGNATIONS) {
+    const modules = await Module.find({
+      projectId,
+      designation,
+      isActive: true,
+    });
+
+    let totalTasks = 0;
+    let completedTasks = 0;
+
+    for (const module of modules) {
+      const total = await Task.countDocuments({
+        moduleId: module._id,
+        isActive: true,
+      });
+
+      const completed = await Task.countDocuments({
+        moduleId: module._id,
+        status: "COMPLETED",
+        isActive: true,
+      });
+
+      totalTasks += total;
+      completedTasks += completed;
+    }
+
+    const progress =
+      totalTasks === 0
+        ? 0
+        : Math.round((completedTasks / totalTasks) * 100);
+
+    designationProgress[designation] = {
+      totalTasks,
+      completedTasks,
+      progress,
+    };
+  }
+
+  return designationProgress;
+};
+
+module.exports = {
+  calculateModuleProgress,
+  calculateProjectProgress,
+  calculateDesignationProgress,
+};

@@ -12,13 +12,16 @@ exports.createModule = async (req, res) => {
         message: "Module name and designation are required",
       });
     }
+
     const project = await Project.findById(projectId);
+
     if (!project) {
       return res.status(404).json({
         success: false,
         message: "Project not found",
       });
     }
+
     const module = await Module.create({
       projectId,
       name,
@@ -43,7 +46,9 @@ exports.createModule = async (req, res) => {
 exports.getProjectModules = async (req, res) => {
   try {
     const { projectId } = req.params;
+
     const project = await Project.findById(projectId);
+
     if (!project) {
       return res.status(404).json({
         success: false,
@@ -74,6 +79,7 @@ exports.getProjectModules = async (req, res) => {
 exports.getModuleById = async (req, res) => {
   try {
     const module = await Module.findById(req.params.moduleId);
+
     if (!module) {
       return res.status(404).json({
         success: false,
@@ -105,7 +111,9 @@ exports.updateModule = async (req, res) => {
         message: "Module name and designation are required",
       });
     }
+
     const module = await Module.findById(req.params.moduleId);
+
     if (!module) {
       return res.status(404).json({
         success: false,
@@ -133,7 +141,6 @@ exports.updateModule = async (req, res) => {
   }
 };
 
-
 exports.deleteModule = async (req, res) => {
   try {
     const module = await Module.findById(req.params.moduleId);
@@ -144,6 +151,7 @@ exports.deleteModule = async (req, res) => {
         message: "Module not found",
       });
     }
+
     module.isActive = false;
 
     await module.save();
@@ -158,6 +166,35 @@ exports.deleteModule = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to delete module",
+    });
+  }
+};
+
+// Get modules by project and designation
+exports.getModulesByDesignation = async (req, res) => {
+  try {
+    const { projectId, designation } = req.params;
+
+    const modules = await Module.find({
+      projectId,
+      designation: designation,
+      isActive: true,
+    }).sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      message: "Modules fetched successfully",
+      projectId,
+      designation: designation,
+      count: modules.length,
+      modules,
+    });
+  } catch (error) {
+    console.error("Get modules by designation error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch modules",
     });
   }
 };
