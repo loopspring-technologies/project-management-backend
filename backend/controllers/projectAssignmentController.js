@@ -88,10 +88,82 @@ const assignment = await ProjectAssignment.create({
   }
 };
 
-// Get Employees Assigned to Project
+
 exports.getProjectEmployees = async (req, res) => {
   try {
     const { projectId } = req.params;
+    const { designation } = req.query;
+
+    const project = await Project.findById(projectId);
+
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: "Project not found",
+      });
+    }
+
+    const assignmentFilter = {
+      projectId,
+      status: "ACTIVE",
+    };
+    if (designation) {
+      assignmentFilter.designation = {
+        $regex: `^${designation.trim()}$`,
+        $options: "i",
+      };
+    }
+
+    const assignments = await ProjectAssignment.find(assignmentFilter)
+      .populate("employeeId", "name designation username")
+      .sort({ createdAt: -1 });
+
+    const allProjectAssignments = await ProjectAssignment.find({
+      projectId,
+      status: "ACTIVE",
+    }).select("employeeId");
+
+    const assignedEmployeeIds = allProjectAssignments.map(
+      (assignment) => assignment.employeeId
+    );
+
+    const availableEmployees = await Employee.find({
+      _id: {
+        $nin: assignedEmployeeIds,
+      },
+      isActive: true,
+    })
+      .select("name designation username")
+      .sort({ name: 1 });
+
+    res.status(200).json({
+      success: true,
+      projectId,
+
+      assignedCount: assignments.length,
+      assignedEmployees: assignments,
+
+      availableCount: availableEmployees.length,
+      availableEmployees,
+
+      count: assignments.length,
+      employees: assignments,
+    });
+  } catch (error) {
+    console.error("Get project employees error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to get project employees",
+    });
+  }
+};
+ 
+ 
+exports.getProjectAllEmployees = async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const { designation } = req.query;
 
     const project = await Project.findById(projectId);
 
@@ -109,8 +181,38 @@ exports.getProjectEmployees = async (req, res) => {
       .populate("employeeId", "name designation username")
       .sort({ createdAt: -1 });
 
+    const assignedEmployeeIds = assignments.map(
+      (assignment) => assignment.employeeId._id
+    );
+
+    const employeeFilter = {
+      _id: {
+        $nin: assignedEmployeeIds,
+      },
+      isActive: true,
+    };
+
+    if (designation) {
+      employeeFilter.designation = {
+        $regex: `^${designation.trim()}$`,
+        $options: "i",
+      };
+    }
+
+    const availableEmployees = await Employee.find(employeeFilter)
+      .select("name designation username")
+      .sort({ name: 1 });
+
     res.status(200).json({
       success: true,
+      projectId,
+
+      assignedCount: assignments.length,
+      assignedEmployees: assignments,
+
+      availableCount: availableEmployees.length,
+      availableEmployees,
+
       count: assignments.length,
       employees: assignments,
     });
@@ -186,3 +288,56 @@ exports.getMyProjects = async (req, res) => {
     });
   }
 };
+
+// Get employees available for assignment by designation
+// exports.getAvailableEmployees = async (req, res) => {
+//   try {
+//     const { projectId, designation } = req.params;
+
+//     const normalizedDesignation = designation.trim().toLowerCase();
+//     const project = await Project.findById(projectId);
+
+//     if (!project) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Project not found",
+//       });
+//     }
+
+//     const activeAssignments = await ProjectAssignment.find({
+//       projectId,
+//       status: "ACTIVE",
+//     }).select("employeeId");
+
+//     const assignedEmployeeIds = activeAssignments.map(
+//       (assignment) => assignment.employeeId
+//     );
+
+   
+//     const availableEmployees = await Employee.find({
+//       _id: {
+//         $nin: assignedEmployeeIds,
+//       },
+//       designation: {
+//         $regex: `^${normalizedDesignation}$`,
+//         $options: "i",
+//       },
+//       isActive: true,
+//     }).select("name designation username");
+
+//     res.status(200).json({
+//       success: true,
+//       projectId,
+//       designation: normalizedDesignation,
+//       count: availableEmployees.length,
+//       employees: availableEmployees,
+//     });
+//   } catch (error) {
+//     console.error("Get available employees error:", error);
+
+//     res.status(500).json({
+//       success: false,
+//       message: "Failed to get available employees",
+//     });
+//   }
+// };

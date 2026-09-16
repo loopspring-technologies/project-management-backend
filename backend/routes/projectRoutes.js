@@ -13,6 +13,7 @@ router.get("/", getProjects);
 router.get("/:projectId/progress", getProjectProgress);
 router.get("/:projectId/work-tracking", getProjectWorkTracking);
 router.get("/:projectId/details", getProjectDetails);
+
 router.get("/:id", getProjectById);
 router.put("/:id", updateProject);
 router.delete("/:id", deleteProject);
