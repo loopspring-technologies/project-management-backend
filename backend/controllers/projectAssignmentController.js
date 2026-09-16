@@ -181,6 +181,7 @@ exports.getProjectAllEmployees = async (req, res) => {
       .populate("employeeId", "name designation username")
       .sort({ createdAt: -1 });
 
+    // Get assigned employee IDs
     const assignedEmployeeIds = assignments.map(
       (assignment) => assignment.employeeId._id
     );
