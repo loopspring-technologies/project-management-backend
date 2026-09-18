@@ -1,6 +1,10 @@
 const Project = require("../models/Project");
-const { calculateProjectProgress } = require("../services/progressService");
+const {
+  calculateProjectProgress,
+  calculateDesignationProgress,
+} = require("../services/progressService");
 const ProjectAssignment = require("../models/ProjectAssignment");
+const Employee = require("../models/Employee");
 
 // Create Project
 exports.createProject = async (req, res) => {
@@ -37,7 +41,6 @@ exports.createProject = async (req, res) => {
   }
 };
 
-
 // Get All Projects with Pagination and Progress
 exports.getProjects = async (req, res) => {
   try {
@@ -54,6 +57,7 @@ exports.getProjects = async (req, res) => {
     }
 
     const skip = (page - 1) * limit;
+
     const projects = await Project.find()
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -170,6 +174,7 @@ exports.updateProject = async (req, res) => {
 exports.deleteProject = async (req, res) => {
   try {
     const projectId = req.params.id;
+
     const project = await Project.findById(projectId);
 
     if (!project) {
@@ -178,6 +183,7 @@ exports.deleteProject = async (req, res) => {
         message: "Project not found",
       });
     }
+
     const assignedEmployees = await ProjectAssignment.countDocuments({
       projectId: projectId,
       status: "ACTIVE",
@@ -187,8 +193,7 @@ exports.deleteProject = async (req, res) => {
       return res.status(400).json({
         success: false,
         canDelete: false,
-        message:
-          "This project is assigned to employees.",
+        message: "This project is assigned to employees.",
       });
     }
 
@@ -205,6 +210,90 @@ exports.deleteProject = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to delete project",
+    });
+  }
+};
+
+const DESIGNATIONS = [
+  "Designing",
+  "Frontend",
+  "Backend",
+  "Database",
+  "Testing",
+  "Hosting",
+];
+
+// Get all designations with employees and progress
+exports.getProjectDesignations = async (req, res) => {
+  try {
+    const { projectId } = req.params;
+
+    const project = await Project.findById(projectId);
+
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: "Project not found",
+      });
+    }
+
+    const assignments = await ProjectAssignment.find({
+      projectId,
+      status: "ACTIVE",
+    }).populate("employeeId", "name designation username");
+
+    const assignedEmployeeIds = assignments.map(
+      (assignment) => assignment.employeeId._id
+    );
+
+    const availableEmployees = await Employee.find({
+      _id: {
+        $nin: assignedEmployeeIds,
+      },
+      isActive: true,
+    })
+      .select("name designation username")
+      .sort({ name: 1 });
+
+    const designationProgress = await calculateDesignationProgress(
+      projectId
+    );
+
+    const designations = DESIGNATIONS.map((designation) => {
+      const assignedEmployees = assignments
+        .filter(
+          (assignment) =>
+            assignment.designation.toLowerCase() ===
+            designation.toLowerCase()
+        )
+        .map((assignment) => assignment.employeeId);
+
+      return {
+        designation,
+
+        progress: designationProgress[designation] || {
+          totalTasks: 0,
+          completedTasks: 0,
+          progress: 0,
+        },
+
+        assignedEmployees,
+
+        availableEmployees,
+      };
+    });
+
+    res.status(200).json({
+      success: true,
+      projectId,
+      designations,
+    });
+  } catch (error) {
+    console.error("Get project designations error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to get project designations",
     });
   }
 };

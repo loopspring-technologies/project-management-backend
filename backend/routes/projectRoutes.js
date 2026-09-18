@@ -1,6 +1,6 @@
 const express = require("express");
 
-const { createProject, getProjects, getProjectById, updateProject, deleteProject
+const { createProject, getProjects, getProjectById, updateProject, deleteProject, getProjectDesignations,
 } = require("../controllers/projectController");
 const { getProjectProgress, getDesignationProgress } = require("../controllers/progressController");
 const { getProjectWorkTracking,} = require("../controllers/workTrackingController");
@@ -14,6 +14,7 @@ router.get("/:projectId/progress", getProjectProgress);
 router.get("/:projectId/designation-progress", getDesignationProgress);
 router.get("/:projectId/work-tracking", getProjectWorkTracking);
 router.get("/:projectId/details", getProjectDetails);
+router.get("/:projectId/designations", getProjectDesignations);
 router.get("/:id", getProjectById);
 router.put("/:id", updateProject);
 router.delete("/:id", deleteProject);
