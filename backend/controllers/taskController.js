@@ -141,7 +141,6 @@ exports.updateTask = async (req, res) => {
   }
 };
 
-
 exports.deleteTask = async (req, res) => {
   try {
     const task = await Task.findById(req.params.taskId);
@@ -153,10 +152,22 @@ exports.deleteTask = async (req, res) => {
       });
     }
 
+    if (task.status === "IN_PROGRESS") {
+      return res.status(400).json({
+        success: false,
+        canDelete: false,
+        isOngoing: true,
+        message:
+          "This task is currently ongoing. Please complete or revoke the task before deleting it.",
+      });
+    }
+
     await Task.findByIdAndDelete(req.params.taskId);
 
     res.status(200).json({
       success: true,
+      canDelete: true,
+      isOngoing: false,
       message: "Task deleted successfully",
     });
   } catch (error) {

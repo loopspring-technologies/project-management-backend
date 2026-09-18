@@ -155,6 +155,22 @@ exports.deleteModule = async (req, res) => {
       });
     }
 
+    const ongoingTaskCount = await Task.countDocuments({
+      moduleId,
+      status: "IN_PROGRESS",
+    });
+
+    if (ongoingTaskCount > 0) {
+      return res.status(400).json({
+        success: false,
+        canDelete: false,
+        isOngoing: true,
+        ongoingTaskCount,
+        message:
+          "This module has an ongoing task. Please delete the task before deleting the module.",
+      });
+    }
+
     const deletedTasks = await Task.deleteMany({
       moduleId,
     });
@@ -163,6 +179,7 @@ exports.deleteModule = async (req, res) => {
 
     res.status(200).json({
       success: true,
+      canDelete: true,
       message: "Module and all its tasks deleted successfully",
       deletedTasks: deletedTasks.deletedCount,
     });
@@ -175,7 +192,6 @@ exports.deleteModule = async (req, res) => {
     });
   }
 };
-
 
 // Get modules by project and designation
 exports.getModulesByDesignation = async (req, res) => {
