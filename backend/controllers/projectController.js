@@ -268,6 +268,12 @@ exports.getProjectDesignations = async (req, res) => {
         )
         .map((assignment) => assignment.employeeId);
 
+      const designationAvailableEmployees = availableEmployees.filter(
+        (employee) =>
+          employee.designation.toLowerCase() ===
+          designation.toLowerCase()
+      );
+
       return {
         designation,
 
@@ -279,7 +285,7 @@ exports.getProjectDesignations = async (req, res) => {
 
         assignedEmployees,
 
-        availableEmployees,
+        availableEmployees: designationAvailableEmployees,
       };
     });
 
