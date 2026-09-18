@@ -1,5 +1,6 @@
 const Module = require("../models/Module");
 const Project = require("../models/Project");
+const Task = require("../models/Task");
 
 exports.createModule = async (req, res) => {
   try {
@@ -143,7 +144,9 @@ exports.updateModule = async (req, res) => {
 
 exports.deleteModule = async (req, res) => {
   try {
-    const module = await Module.findById(req.params.moduleId);
+    const { moduleId } = req.params;
+
+    const module = await Module.findById(moduleId);
 
     if (!module) {
       return res.status(404).json({
@@ -152,13 +155,16 @@ exports.deleteModule = async (req, res) => {
       });
     }
 
-    module.isActive = false;
+    const deletedTasks = await Task.deleteMany({
+      moduleId,
+    });
 
-    await module.save();
+    await Module.findByIdAndDelete(moduleId);
 
     res.status(200).json({
       success: true,
-      message: "Module deleted successfully",
+      message: "Module and all its tasks deleted successfully",
+      deletedTasks: deletedTasks.deletedCount,
     });
   } catch (error) {
     console.error("Delete module error:", error);
@@ -169,6 +175,7 @@ exports.deleteModule = async (req, res) => {
     });
   }
 };
+
 
 // Get modules by project and designation
 exports.getModulesByDesignation = async (req, res) => {

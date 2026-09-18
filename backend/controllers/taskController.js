@@ -141,6 +141,7 @@ exports.updateTask = async (req, res) => {
   }
 };
 
+
 exports.deleteTask = async (req, res) => {
   try {
     const task = await Task.findById(req.params.taskId);
@@ -152,9 +153,7 @@ exports.deleteTask = async (req, res) => {
       });
     }
 
-    task.isActive = false;
-
-    await task.save();
+    await Task.findByIdAndDelete(req.params.taskId);
 
     res.status(200).json({
       success: true,
