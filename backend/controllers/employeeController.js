@@ -1,6 +1,7 @@
 const Employee = require("../models/Employee");
 const ProjectAssignment = require("../models/ProjectAssignment");
 
+
 // Create Employee
 exports.createEmployee = async (req, res) => {
   try {
@@ -31,15 +32,11 @@ exports.createEmployee = async (req, res) => {
       });
     }
 
-    // Hash password
-    // const hashedPassword = await bcrypt.hash(password, 10);
-
     // Create employee
     const employee = await Employee.create({
       name,
       designation,
       username: username.toLowerCase(),
-      // password: hashedPassword,
       password,
       role: "EMPLOYEE",
     });
@@ -90,7 +87,6 @@ exports.getEmployees = async (req, res) => {
       .limit(limit);
 
     const totalEmployees = await Employee.countDocuments();
-
     const totalPages = Math.ceil(totalEmployees / limit);
 
     res.status(200).json({

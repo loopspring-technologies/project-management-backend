@@ -36,17 +36,7 @@ exports.login = async (req, res) => {
       });
     }
 
-    // const isPasswordCorrect = await bcrypt.compare(
-    //   password,
-    //   employee.password
-    // );
-
-    // if (!isPasswordCorrect) {
-    //   return res.status(401).json({
-    //     success: false,
-    //     message: "Invalid username or password",
-    //   });
-    // }
+  
 
     if (employee.password !== password) {
   return res.status(401).json({
