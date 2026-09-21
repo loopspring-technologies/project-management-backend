@@ -31,14 +31,15 @@ exports.createModule = async (req, res) => {
     });
 
     const moduleData = module.toObject();
-    delete moduleData.projectId;
 
     res.status(201).json({
       success: true,
       message: "Module created successfully",
       module: {
         ...moduleData,
+        projectId: project._id,
         projectName: project.title,
+        deadLine: project.deadLine,
       },
     });
   } catch (error) {
@@ -72,16 +73,19 @@ exports.getProjectModules = async (req, res) => {
     const modulesWithProjectName = modules.map((module) => {
       const moduleData = module.toObject();
 
-      delete moduleData.projectId;
-
       return {
         ...moduleData,
+        projectId: project._id,
         projectName: project.title,
+        deadLine: project.deadLine,
       };
     });
 
     res.status(200).json({
       success: true,
+      projectId: project._id,
+      projectName: project.title,
+      deadLine: project.deadLine,
       count: modulesWithProjectName.length,
       modules: modulesWithProjectName,
     });
@@ -110,13 +114,13 @@ exports.getModuleById = async (req, res) => {
 
     const moduleData = module.toObject();
 
-    delete moduleData.projectId;
-
     res.status(200).json({
       success: true,
       module: {
         ...moduleData,
+        projectId: module.projectId,
         projectName: project ? project.title : null,
+        deadLine: project ? project.deadLine : null,
       },
     });
   } catch (error) {
@@ -158,14 +162,14 @@ exports.updateModule = async (req, res) => {
 
     const moduleData = module.toObject();
 
-    delete moduleData.projectId;
-
     res.status(200).json({
       success: true,
       message: "Module updated successfully",
       module: {
         ...moduleData,
+        projectId: module.projectId,
         projectName: project ? project.title : null,
+        deadLine: project ? project.deadLine : null,
       },
     });
   } catch (error) {
@@ -262,6 +266,7 @@ exports.getModulesByDesignation = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Modules fetched successfully",
+      projectId: project._id,
       projectName: project.title,
       deadLine: project.deadLine,
       designation,

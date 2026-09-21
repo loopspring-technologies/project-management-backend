@@ -74,6 +74,7 @@ exports.getModuleTasks = async (req, res) => {
 
     res.status(200).json({
       success: true,
+      projectId: project._id,
       projectName: project.title,
       deadLine: project.deadLine,
       count: tasks.length,

@@ -1,179 +1,18 @@
-const Project = require("../models/Project");
-const {
-  calculateProjectProgress,
-  calculateDesignationProgress,
-} = require("../services/progressService");
 const ProjectAssignment = require("../models/ProjectAssignment");
+const Project = require("../models/Project");
 const Employee = require("../models/Employee");
 
-// Create Project
-exports.createProject = async (req, res) => {
+exports.assignEmployeeToProject = async (req, res) => {
   try {
-    const { title, clientName, deadLine } = req.body;
+    const { employeeId, designation } = req.body;
+    const { projectId } = req.params;
 
-    // Check required fields
-    if (!title || !deadLine) {
+    if (!employeeId || !designation) {
       return res.status(400).json({
         success: false,
-        message: "Project title and start date are required",
+        message: "Employee ID and designation are required",
       });
     }
-
-    // Create project
-    const project = await Project.create({
-      title,
-      clientName,
-      deadLine,
-    });
-
-    res.status(201).json({
-      success: true,
-      message: "Project created successfully",
-      project,
-    });
-  } catch (error) {
-    console.error("Create project error:", error);
-
-    res.status(500).json({
-      success: false,
-      message: "Failed to create project",
-    });
-  }
-};
-
-// Get All Projects with Pagination and Progress
-exports.getProjects = async (req, res) => {
-  try {
-    let { page = 1, limit = 6 } = req.query;
-    page = parseInt(page);
-    limit = parseInt(limit);
-
-    if (isNaN(page) || page < 1) {
-      page = 1;
-    }
-
-    if (isNaN(limit) || limit < 1 || limit > 100) {
-      limit = 6;
-    }
-
-    const skip = (page - 1) * limit;
-
-    const projects = await Project.find()
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
-
-    const totalProjects = await Project.countDocuments();
-    const totalPages = Math.ceil(totalProjects / limit);
-
-    const projectsWithProgress = await Promise.all(
-      projects.map(async (project) => {
-        const progress = await calculateProjectProgress(project._id);
-
-        return {
-          ...project.toObject(),
-          progress,
-        };
-      })
-    );
-
-    res.status(200).json({
-      success: true,
-      count: projectsWithProgress.length,
-
-      pagination: {
-        currentPage: page,
-        limit,
-        totalProjects,
-        totalPages,
-        hasNextPage: page < totalPages,
-        hasPreviousPage: page > 1,
-      },
-
-      projects: projectsWithProgress,
-    });
-  } catch (error) {
-    console.error("Get projects error:", error);
-
-    res.status(500).json({
-      success: false,
-      message: "Failed to get projects",
-    });
-  }
-};
-
-// Get Single Project
-exports.getProjectById = async (req, res) => {
-  try {
-    const project = await Project.findById(req.params.id);
-
-    if (!project) {
-      return res.status(404).json({
-        success: false,
-        message: "Project not found",
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      project,
-    });
-  } catch (error) {
-    console.error("Get project error:", error);
-
-    res.status(500).json({
-      success: false,
-      message: "Failed to get project",
-    });
-  }
-};
-
-// Update Project
-exports.updateProject = async (req, res) => {
-  try {
-    const { title, clientName, deadLine } = req.body;
-
-    if (!title || !deadLine) {
-      return res.status(400).json({
-        success: false,
-        message: "Project title and start date are required",
-      });
-    }
-
-    const project = await Project.findById(req.params.id);
-
-    if (!project) {
-      return res.status(404).json({
-        success: false,
-        message: "Project not found",
-      });
-    }
-
-    project.title = title;
-    project.clientName = clientName;
-    project.deadLine = deadLine;
-
-    await project.save();
-
-    res.status(200).json({
-      success: true,
-      message: "Project updated successfully",
-      project,
-    });
-  } catch (error) {
-    console.error("Update project error:", error);
-
-    res.status(500).json({
-      success: false,
-      message: "Failed to update project",
-    });
-  }
-};
-
-// Delete Project
-exports.deleteProject = async (req, res) => {
-  try {
-    const projectId = req.params.id;
 
     const project = await Project.findById(projectId);
 
@@ -184,49 +23,154 @@ exports.deleteProject = async (req, res) => {
       });
     }
 
-    const assignedEmployees = await ProjectAssignment.countDocuments({
-      projectId: projectId,
-      status: "ACTIVE",
-    });
+    const employee = await Employee.findById(employeeId);
 
-    if (assignedEmployees > 0) {
-      return res.status(400).json({
+    if (!employee) {
+      return res.status(404).json({
         success: false,
-        canDelete: false,
-        message: "This project is assigned to employees.",
+        message: "Employee not found",
       });
     }
 
-    await Project.findByIdAndDelete(projectId);
+    if (employee.designation !== designation) {
+      return res.status(400).json({
+        success: false,
+        message: "Employee designation does not match",
+      });
+    }
 
-    res.status(200).json({
+    const existingAssignment = await ProjectAssignment.findOne({
+      projectId,
+      employeeId,
+    });
+
+    if (existingAssignment) {
+      if (existingAssignment.status === "ACTIVE") {
+        return res.status(409).json({
+          success: false,
+          message: "Employee is already assigned to this project",
+        });
+      }
+
+      existingAssignment.status = "ACTIVE";
+      existingAssignment.designation = designation;
+      existingAssignment.assignedAt = new Date();
+
+      await existingAssignment.save();
+
+      res.status(200).json({
+        success: true,
+        message: "Employee assigned to project successfully",
+        projectId,
+        projectName: project.title,
+        deadLine: project.deadLine,
+        assignment: existingAssignment,
+      });
+
+      return;
+    }
+
+    const assignment = await ProjectAssignment.create({
+      projectId,
+      employeeId,
+      designation,
+    });
+
+    res.status(201).json({
       success: true,
-      canDelete: true,
-      message: "Project deleted successfully",
+      message: "Employee assigned to project successfully",
+      projectId,
+      projectName: project.title,
+      deadLine: project.deadLine,
+      assignment,
     });
   } catch (error) {
-    console.error("Delete project error:", error);
+    console.error("Assign employee error:", error);
 
     res.status(500).json({
       success: false,
-      message: "Failed to delete project",
+      message: "Failed to assign employee to project",
     });
   }
 };
 
-const DESIGNATIONS = [
-  "Designing",
-  "Frontend",
-  "Backend",
-  "Database",
-  "Testing",
-  "Hosting",
-];
-
-// Get all designations with employees and progress
-exports.getProjectDesignations = async (req, res) => {
+exports.getProjectEmployees = async (req, res) => {
   try {
     const { projectId } = req.params;
+    const { designation } = req.query;
+
+    const project = await Project.findById(projectId);
+
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: "Project not found",
+      });
+    }
+
+    const assignmentFilter = {
+      projectId,
+      status: "ACTIVE",
+    };
+
+    if (designation) {
+      assignmentFilter.designation = {
+        $regex: `^${designation.trim()}$`,
+        $options: "i",
+      };
+    }
+
+    const assignments = await ProjectAssignment.find(assignmentFilter)
+      .populate("employeeId", "name designation username")
+      .sort({ createdAt: -1 });
+
+    const allProjectAssignments = await ProjectAssignment.find({
+      projectId,
+      status: "ACTIVE",
+    }).select("employeeId");
+
+    const assignedEmployeeIds = allProjectAssignments.map(
+      (assignment) => assignment.employeeId
+    );
+
+    const availableEmployees = await Employee.find({
+      _id: {
+        $nin: assignedEmployeeIds,
+      },
+      isActive: true,
+    })
+      .select("name designation username")
+      .sort({ name: 1 });
+
+    res.status(200).json({
+      success: true,
+      projectId,
+      projectName: project.title,
+      deadLine: project.deadLine,
+
+      assignedCount: assignments.length,
+      assignedEmployees: assignments,
+
+      availableCount: availableEmployees.length,
+      availableEmployees,
+
+      count: assignments.length,
+      employees: assignments,
+    });
+  } catch (error) {
+    console.error("Get project employees error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to get project employees",
+    });
+  }
+};
+
+exports.getProjectAllEmployees = async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const { designation } = req.query;
 
     const project = await Project.findById(projectId);
 
@@ -240,66 +184,117 @@ exports.getProjectDesignations = async (req, res) => {
     const assignments = await ProjectAssignment.find({
       projectId,
       status: "ACTIVE",
-    }).populate("employeeId", "name designation username");
+    })
+      .populate("employeeId", "name designation username")
+      .sort({ createdAt: -1 });
 
+    // Get assigned employee IDs
     const assignedEmployeeIds = assignments.map(
       (assignment) => assignment.employeeId._id
     );
 
-    const availableEmployees = await Employee.find({
+    const employeeFilter = {
       _id: {
         $nin: assignedEmployeeIds,
       },
       isActive: true,
-    })
+    };
+
+    if (designation) {
+      employeeFilter.designation = {
+        $regex: `^${designation.trim()}$`,
+        $options: "i",
+      };
+    }
+
+    const availableEmployees = await Employee.find(employeeFilter)
       .select("name designation username")
       .sort({ name: 1 });
-
-    const designationProgress = await calculateDesignationProgress(
-      projectId
-    );
-
-    const designations = DESIGNATIONS.map((designation) => {
-      const assignedEmployees = assignments
-        .filter(
-          (assignment) =>
-            assignment.designation.toLowerCase() ===
-            designation.toLowerCase()
-        )
-        .map((assignment) => assignment.employeeId);
-
-      const designationAvailableEmployees = availableEmployees.filter(
-        (employee) =>
-          employee.designation.toLowerCase() ===
-          designation.toLowerCase()
-      );
-
-      return {
-        designation,
-
-        progress: designationProgress[designation] || {
-          totalTasks: 0,
-          completedTasks: 0,
-          progress: 0,
-        },
-
-        assignedEmployees,
-
-        availableEmployees: designationAvailableEmployees,
-      };
-    });
 
     res.status(200).json({
       success: true,
       projectId,
-      designations,
+      projectName: project.title,
+      deadLine: project.deadLine,
+
+      assignedCount: assignments.length,
+      assignedEmployees: assignments,
+
+      availableCount: availableEmployees.length,
+      availableEmployees,
+
+      count: assignments.length,
+      employees: assignments,
     });
   } catch (error) {
-    console.error("Get project designations error:", error);
+    console.error("Get project employees error:", error);
 
     res.status(500).json({
       success: false,
-      message: "Failed to get project designations",
+      message: "Failed to get project employees",
+    });
+  }
+};
+
+// Remove Employee from Project
+exports.removeEmployeeFromProject = async (req, res) => {
+  try {
+    const { projectId, employeeId } = req.params;
+
+    const assignment = await ProjectAssignment.findOne({
+      projectId,
+      employeeId,
+      status: "ACTIVE",
+    });
+
+    if (!assignment) {
+      return res.status(404).json({
+        success: false,
+        message: "Active employee assignment not found",
+      });
+    }
+
+    assignment.status = "INACTIVE";
+
+    await assignment.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Employee removed from project successfully",
+    });
+  } catch (error) {
+    console.error("Remove employee error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to remove employee from project",
+    });
+  }
+};
+
+// Get Projects Assigned to Logged-in Employee
+exports.getMyProjects = async (req, res) => {
+  try {
+    const employeeId = req.employee._id;
+
+    const assignments = await ProjectAssignment.find({
+      employeeId,
+      status: "ACTIVE",
+    })
+      .populate("projectId", "title clientName startDate deadLine isActive")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: assignments.length,
+      projects: assignments,
+    });
+  } catch (error) {
+    console.error("Get my projects error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to get assigned projects",
     });
   }
 };

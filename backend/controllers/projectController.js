@@ -291,6 +291,7 @@ exports.getProjectDesignations = async (req, res) => {
 
     res.status(200).json({
       success: true,
+      projectId,
       projectName: project.title,
       deadLine: project.deadLine,
       designations,
