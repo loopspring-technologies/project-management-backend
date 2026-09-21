@@ -47,6 +47,8 @@ exports.createTask = async (req, res) => {
 exports.getModuleTasks = async (req, res) => {
   try {
     const { moduleId } = req.params;
+    const { status = "all" } = req.query;
+
     const module = await Module.findById(moduleId);
 
     if (!module) {
@@ -65,10 +67,39 @@ exports.getModuleTasks = async (req, res) => {
       });
     }
 
-    const tasks = await Task.find({
+    const taskFilter = {
       moduleId,
       isActive: true,
-    })
+    };
+
+    if (status === "unselected") {
+      taskFilter.status = "AVAILABLE";
+    }
+
+    if (status === "ongoing") {
+      taskFilter.status = {
+        $in: ["BOOKED", "IN_PROGRESS"],
+      };
+    }
+
+    if (status === "completed") {
+      taskFilter.status = "COMPLETED";
+    }
+
+    if (
+      status !== "all" &&
+      status !== "unselected" &&
+      status !== "ongoing" &&
+      status !== "completed"
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Invalid status. Use all, unselected, ongoing, or completed",
+      });
+    }
+
+    const tasks = await Task.find(taskFilter)
       .populate("bookedBy", "name designation username")
       .sort({ createdAt: -1 });
 
@@ -77,6 +108,7 @@ exports.getModuleTasks = async (req, res) => {
       projectId: project._id,
       projectName: project.title,
       deadLine: project.deadLine,
+      status,
       count: tasks.length,
       tasks,
     });
