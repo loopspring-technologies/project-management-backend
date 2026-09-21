@@ -1,5 +1,6 @@
 const Task = require("../models/Task");
 const Module = require("../models/Module");
+const Project = require("../models/Project");
 const ProjectAssignment = require("../models/ProjectAssignment");
 
 exports.createTask = async (req, res) => {
@@ -55,6 +56,15 @@ exports.getModuleTasks = async (req, res) => {
       });
     }
 
+    const project = await Project.findById(module.projectId);
+
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: "Project not found",
+      });
+    }
+
     const tasks = await Task.find({
       moduleId,
       isActive: true,
@@ -64,6 +74,8 @@ exports.getModuleTasks = async (req, res) => {
 
     res.status(200).json({
       success: true,
+      projectName: project.title,
+      deadLine: project.deadLine,
       count: tasks.length,
       tasks,
     });
@@ -180,7 +192,6 @@ exports.deleteTask = async (req, res) => {
   }
 };
 
-
 exports.bookTask = async (req, res) => {
   try {
     const { taskId } = req.params;
@@ -197,25 +208,25 @@ exports.bookTask = async (req, res) => {
 
     const module = await Module.findById(task.moduleId);
 
-if (!module) {
-  return res.status(404).json({
-    success: false,
-    message: "Module not found",
-  });
-}
+    if (!module) {
+      return res.status(404).json({
+        success: false,
+        message: "Module not found",
+      });
+    }
 
-const assignment = await ProjectAssignment.findOne({
-  projectId: module.projectId,
-  employeeId,
-  status: "ACTIVE",
-});
+    const assignment = await ProjectAssignment.findOne({
+      projectId: module.projectId,
+      employeeId,
+      status: "ACTIVE",
+    });
 
-if (!assignment) {
-  return res.status(403).json({
-    success: false,
-    message: "You are not assigned to this project",
-  });
-}
+    if (!assignment) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not assigned to this project",
+      });
+    }
 
     if (!task.isActive) {
       return res.status(400).json({
@@ -325,6 +336,7 @@ exports.completeTask = async (req, res) => {
         message: "Task not found",
       });
     }
+
     if (!task.isActive) {
       return res.status(400).json({
         success: false,
@@ -352,6 +364,7 @@ exports.completeTask = async (req, res) => {
     task.status = "COMPLETED";
     task.completedAt = new Date();
     await task.save();
+
     const updatedTask = await Task.findById(taskId).populate(
       "bookedBy",
       "name designation username"
@@ -377,12 +390,14 @@ exports.revokeTask = async (req, res) => {
     const { taskId } = req.params;
     const employeeId = req.employee._id;
     const task = await Task.findById(taskId);
+
     if (!task) {
       return res.status(404).json({
         success: false,
         message: "Task not found",
       });
     }
+
     if (!task.isActive) {
       return res.status(400).json({
         success: false,
@@ -409,16 +424,20 @@ exports.revokeTask = async (req, res) => {
         message: "Only the employee who booked this task can revoke it",
       });
     }
+
     task.status = "AVAILABLE";
     task.bookedBy = null;
     task.bookedAt = null;
     task.startedAt = null;
     task.completedAt = null;
+
     await task.save();
+
     const updatedTask = await Task.findById(taskId).populate(
       "bookedBy",
       "name designation username"
     );
+
     res.status(200).json({
       success: true,
       message: "Task revoked successfully",
@@ -426,10 +445,10 @@ exports.revokeTask = async (req, res) => {
     });
   } catch (error) {
     console.error("Revoke task error:", error);
+
     res.status(500).json({
       success: false,
       message: "Failed to revoke task",
     });
   }
 };
-
