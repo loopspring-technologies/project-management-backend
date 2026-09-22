@@ -33,13 +33,6 @@ exports.assignEmployeeToProject = async (req, res) => {
       });
     }
 
-    if (employee.designation !== designation) {
-      return res.status(400).json({
-        success: false,
-        message: "Employee designation does not match",
-      });
-    }
-
     const existingAssignment = await ProjectAssignment.findOne({
       projectId,
       employeeId,
