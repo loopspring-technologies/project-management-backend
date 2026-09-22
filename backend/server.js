@@ -9,7 +9,6 @@ const projectRoutes = require("./routes/projectRoutes");
 const projectAssignmentRoutes = require("./routes/projectAssignmentRoutes");
 const moduleRoutes = require("./routes/moduleRoutes");
 const taskRoutes = require("./routes/taskRoutes");
-const viewerRoutes = require("./routes/viewerRoutes");
 
 const app = express();
 // hello
@@ -25,7 +24,6 @@ app.use("/api/projects", projectRoutes);
 app.use( "/api/projects/:projectId/employees", projectAssignmentRoutes);
 app.use( "/api/projects/:projectId/modules", moduleRoutes);
 app.use( "/api/modules/:moduleId/tasks", taskRoutes);
-app.use("/api/viewer", viewerRoutes);
 
 
 connectDB();

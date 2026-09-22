@@ -1,6 +1,7 @@
 const ProjectAssignment = require("../models/ProjectAssignment");
 const Project = require("../models/Project");
 const Employee = require("../models/Employee");
+const { calculateProjectProgress,} = require("../services/progressService");
 
 exports.assignEmployeeToProject = async (req, res) => {
   try {
@@ -281,20 +282,36 @@ exports.getMyProjects = async (req, res) => {
       employeeId,
       status: "ACTIVE",
     })
-      .populate("projectId", "title clientName startDate deadLine isActive")
+      .populate(
+        "projectId",
+        "title clientName startDate deadLine isActive"
+      )
       .sort({ createdAt: -1 });
+
+    const projectsWithProgress = await Promise.all(
+      assignments.map(async (assignment) => {
+        const progress = await calculateProjectProgress(
+          assignment.projectId._id
+        );
+
+        return {
+          ...assignment.toObject(),
+          progress,
+        };
+      })
+    );
 
     res.status(200).json({
       success: true,
-      count: assignments.length,
-      projects: assignments,
+      count: projectsWithProgress.length,
+      projects: projectsWithProgress,
     });
   } catch (error) {
     console.error("Get my projects error:", error);
 
     res.status(500).json({
       success: false,
-      message: "Failed to get assigned projects",
+      message: "Failed to get your projects",
     });
   }
 };
