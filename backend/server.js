@@ -35,12 +35,6 @@ app.get("/", (req, res) => {
   });
 });
 
-app.get("/api", (req, res) => {
-  res.json({
-    success: true,
-    message: "Project Management API is connected successfully",
-  });
-});
 
 const PORT = process.env.PORT || 5000;
 
