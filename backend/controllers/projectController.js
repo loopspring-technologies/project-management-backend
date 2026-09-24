@@ -44,7 +44,7 @@ exports.createProject = async (req, res) => {
 // Get All Projects with Pagination and Progress
 exports.getProjects = async (req, res) => {
   try {
-    let { page = 1, limit = 6 } = req.query;
+    let { page = 1, limit = 10 } = req.query;
     page = parseInt(page);
     limit = parseInt(limit);
 
@@ -53,7 +53,7 @@ exports.getProjects = async (req, res) => {
     }
 
     if (isNaN(limit) || limit < 1 || limit > 100) {
-      limit = 6;
+      limit = 10;
     }
 
     const skip = (page - 1) * limit;

@@ -68,7 +68,7 @@ exports.createEmployee = async (req, res) => {
 // Get Employees with Pagination
 exports.getEmployees = async (req, res) => {
   try {
-    let { page = 1, limit = 10 } = req.query;
+    let { page = 1, limit = 20 } = req.query;
     page = parseInt(page);
     limit = parseInt(limit);
 
@@ -76,7 +76,7 @@ exports.getEmployees = async (req, res) => {
       page = 1;
     }
     if (isNaN(limit) || limit < 1 || limit > 100) {
-      limit = 10;
+      limit = 20;
     }
 
     const skip = (page - 1) * limit;
